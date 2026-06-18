@@ -1,0 +1,34 @@
+# NOTE: this file uses ${SCHRODINGER01_IP}, substituted at `docker compose up`
+# time from the .env file in this same directory. Set the real IP there —
+# never hardcode it here, since Docker's `ports:` host-IP binding requires a
+# literal IP (it does not resolve hostnames).
+services:
+  traefik:
+    image: traefik:v3.1
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+      - ./certs:/certs:ro
+
+  frontend:
+    image: ai-platform/frontend:latest
+    restart: unless-stopped
+    ports:
+      - "${SCHRODINGER01_IP}:3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: https://ai.internal/api
+      NEXT_PUBLIC_WS_URL: wss://ai.internal/ws
+
+  backend-api:
+    image: ai-platform/backend:latest
+    restart: unless-stopped
+    ports:
+      - "${SCHRODINGER01_IP}:8000:8000"
+    env_file: .env
+    volumes:
+      - /mnt/cephfs:/mnt/cephfs:rw

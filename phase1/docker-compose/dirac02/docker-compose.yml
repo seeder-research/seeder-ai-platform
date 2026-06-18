@@ -1,0 +1,36 @@
+# NOTE: this file uses ${DIRAC02_IP} and ${FEYNMAN_IP}, substituted at
+# `docker compose up` time from the .env file in this same directory. Set the
+# real IPs there — never hardcode them here. Both Docker's `ports:` host-IP
+# binding and WireGuard's PEERDNS (pushed to VPN clients before their tunnel
+# exists, so it can't depend on DNS) require literal IPs.
+services:
+  wireguard:
+    image: linuxserver/wireguard:latest
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      SERVERURL: <public-ip-or-ddns>
+      SERVERPORT: "51820"
+      PEERS: "3"
+      PEERDNS: "${FEYNMAN_IP}"
+      INTERNAL_SUBNET: "10.13.13.0/24"
+    ports:
+      - "51820:51820/udp"
+    volumes:
+      - ./wireguard/config:/config
+      - /lib/modules:/lib/modules:ro
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "${DIRAC02_IP}:6379:6379"
+    volumes:
+      - /mnt/local/redis:/data
+    command: redis-server --appendonly yes

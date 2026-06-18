@@ -1,0 +1,30 @@
+# NOTE: this file uses ${FEYNMAN_IP}, substituted at `docker compose up` time
+# from the .env file in this same directory. Set the real IP there — never
+# hardcode it here, since Docker's `ports:` host-IP binding requires a
+# literal IP (it does not resolve hostnames).
+services:
+  postgresql:
+    image: postgres:16
+    restart: unless-stopped
+    ports:
+      - "${FEYNMAN_IP}:5432:5432"
+    environment:
+      POSTGRES_DB: aiplatform
+      POSTGRES_USER: aiplatform
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - /mnt/zfs/postgresql:/var/lib/postgresql/data
+
+  pgbouncer:
+    image: pgbouncer/pgbouncer:latest
+    restart: unless-stopped
+    ports:
+      - "${FEYNMAN_IP}:5433:5432"
+    environment:
+      DATABASES_HOST: postgresql
+      DATABASES_PORT: "5432"
+      DATABASES_DBNAME: aiplatform
+      PGBOUNCER_POOL_MODE: transaction
+      PGBOUNCER_MAX_CLIENT_CONN: "200"
+      PGBOUNCER_DEFAULT_POOL_SIZE: "20"
+    depends_on: [postgresql]

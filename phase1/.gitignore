@@ -1,0 +1,18 @@
+# Real environment files contain secrets — only .env.template files should be committed
+.env
+*/.env
+docker-compose/*/.env
+
+# Python
+backend/venv/
+backend/__pycache__/
+**/__pycache__/
+*.pyc
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+
+# OS noise
+.DS_Store

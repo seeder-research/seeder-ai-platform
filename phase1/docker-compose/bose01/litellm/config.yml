@@ -1,0 +1,23 @@
+# NOTE: api_base uses Docker Compose service names (sglang-qwen3.6-27b,
+# sglang-gemma4-31b-it), not a machine hostname/IP — since LiteLLM and the
+# SGLang containers are services in the same Compose project, Docker's
+# built-in network DNS resolves these directly with no external IP needed.
+model_list:
+  - model_name: qwen3.6-27b
+    litellm_params:
+      model: openai/qwen3.6-27b
+      api_base: http://sglang-qwen3.6-27b:8010/v1
+      api_key: none
+
+  - model_name: gemma4-31b-it
+    litellm_params:
+      model: openai/gemma4-31b-it
+      api_base: http://sglang-gemma4-31b-it:8011/v1
+      api_key: none
+
+router_settings:
+  routing_strategy: least-busy
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL

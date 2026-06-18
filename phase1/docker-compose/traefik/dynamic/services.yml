@@ -1,0 +1,47 @@
+# NOTE: machine names below (schrodinger01, schrodinger02) are placeholders.
+# Traefik resolves hostnames normally at runtime, so these work as-is if your
+# environment has DNS or /etc/hosts entries for them; otherwise replace with
+# real IP addresses.
+http:
+  routers:
+    backend-api:
+      rule: "Host(`ai.internal`) && PathPrefix(`/api`)"
+      entryPoints: [websecure]
+      service: backend-lb
+      tls: {}
+      priority: 10
+
+    backend-ws:
+      rule: "Host(`ai.internal`) && PathPrefix(`/ws`)"
+      entryPoints: [websecure]
+      service: backend-lb
+      tls: {}
+      priority: 10
+
+    frontend:
+      rule: "Host(`ai.internal`)"
+      entryPoints: [websecure]
+      service: frontend-lb
+      tls: {}
+      priority: 1
+
+  services:
+    frontend-lb:
+      loadBalancer:
+        servers:
+          - url: "http://schrodinger01:3000"
+          - url: "http://schrodinger02:3000"
+        healthCheck:
+          path: /healthz
+          interval: "10s"
+          timeout: "3s"
+
+    backend-lb:
+      loadBalancer:
+        servers:
+          - url: "http://schrodinger01:8000"
+          - url: "http://schrodinger02:8000"
+        healthCheck:
+          path: /health
+          interval: "10s"
+          timeout: "3s"

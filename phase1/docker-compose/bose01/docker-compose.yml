@@ -1,0 +1,72 @@
+# NOTE: this file uses ${BOSE01_IP} and ${FEYNMAN_IP}, substituted at
+# `docker compose up` time from the .env file in this same directory. Set the
+# real IPs there — never hardcode them here, since Docker's `ports:` host-IP
+# binding requires a literal IP (it does not resolve hostnames).
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    restart: unless-stopped
+    ports:
+      - "${BOSE01_IP}:4000:4000"
+    volumes:
+      - ./litellm/config.yml:/app/config.yaml:ro
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      DATABASE_URL: postgresql://aiplatform:${POSTGRES_PASSWORD}@${FEYNMAN_IP}:5433/litellm
+
+  guardrails:
+    image: ai-platform/guardrails:latest
+    restart: unless-stopped
+    ports:
+      - "${BOSE01_IP}:8001:8001"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+
+  sglang-qwen3.6-27b:
+    image: lmsysorg/sglang:latest
+    restart: unless-stopped
+    ports:
+      - "${BOSE01_IP}:8010:8010"
+    command: >
+      python -m sglang.launch_server
+      --model-path /opt/local_llm/huggingface/qwen/3.6/27b/fp8
+      --port 8010
+      --tp 4
+      --quantization fp8
+      --served-model-name qwen3.6-27b
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['1', '2', '3', '4']
+              capabilities: [gpu]
+    volumes:
+      - /opt/local_llm/huggingface:/opt/local_llm/huggingface:ro
+
+  sglang-gemma4-31b-it:
+    image: lmsysorg/sglang:latest
+    restart: unless-stopped
+    ports:
+      - "${BOSE01_IP}:8011:8011"
+    command: >
+      python -m sglang.launch_server
+      --model-path /opt/local_llm/huggingface/gemma/4/31b/it/fp8
+      --port 8011
+      --tp 2
+      --quantization fp8
+      --served-model-name gemma4-31b-it
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['5', '6']
+              capabilities: [gpu]
+    volumes:
+      - /opt/local_llm/huggingface:/opt/local_llm/huggingface:ro
