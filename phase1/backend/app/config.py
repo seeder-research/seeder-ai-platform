@@ -8,14 +8,13 @@ class Settings(BaseSettings):
     ldap_url: str
     ldap_base_dn: str
     ldap_people_dn: str = "ou=users,dc=seeder,dc=org"
-    ldap_bind_dn: str
-    ldap_bind_password: str
+    # Kept for future use (e.g. user search/autocomplete, admin lookups).
+    # Not required for current auth flow — user binds with their own
+    # credentials and reads their own attributes; no service account needed.
+    ldap_bind_dn: str | None = None
+    ldap_bind_password: str | None = None
     bootstrap_admin_uid: str
-    # StartTLS server cert validation. Leave unset to use the system default
-    # trust store (e.g. /etc/ssl/certs/ca-certificates.crt on Debian/Ubuntu),
-    # which already includes anything placed in /usr/local/share/ca-certificates
-    # and registered via `update-ca-certificates`. Set this only if you need to
-    # point at a specific cert file instead of relying on the system store.
+    # StartTLS cert — leave unset to use system trust store
     ldap_ca_cert_path: str | None = None
 
     jwt_secret: str
